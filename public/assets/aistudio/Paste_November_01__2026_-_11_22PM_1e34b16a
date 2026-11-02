@@ -1,0 +1,2163 @@
+# PROJECT: AI NEXUS
+## A Personal AI Platform with Native AI-to-AI Communication
+
+You are acting as the Principal Software Architect, Staff Full-Stack Engineer, AI Systems Engineer, Security Architect, Product Designer and Technical Lead for a completely new product called **AI Nexus**.
+
+Your task is to design and build AI Nexus from scratch.
+
+This is not a simple chatbot, a generic multi-agent framework, an AI dashboard, or an agent marketplace.
+
+AI Nexus is a **Personal AI platform where every user owns an independent AI assistant, and those assistants can communicate, collaborate, exchange explicitly authorized information, and complete tasks on behalf of their respective owners.**
+
+The application should provide a familiar ChatGPT-like experience while introducing a native communication network between independently owned Personal AIs.
+
+The product should feel simple on the surface and sophisticated underneath.
+
+Do not sacrifice architectural quality for speed. Do not create a monolithic application. Do not mix the Chatbot application with the Gateway infrastructure. Do not create unnecessary microservices either.
+
+Build a modular, secure, independently deployable system with clear boundaries.
+
+---
+
+# PART 1 — PRODUCT VISION
+
+## 1.1 What are we building?
+
+Imagine ChatGPT, except every person has their own Personal AI.
+
+Alice has Alice AI.
+Bob has Bob AI.
+Charlie has Charlie AI.
+
+Each Personal AI:
+- Belongs to an identifiable owner.
+- Has its own identity and cryptographic credentials.
+- Has its own conversations and memory.
+- Has its own configured LLM provider and model.
+- Has its own tools and capabilities.
+- Has its own permissions and privacy policies.
+- Can operate locally, in the cloud, or in a hybrid environment.
+- Can communicate with other Personal AIs through AI Nexus Gateway.
+- Can independently respond to authorized requests from other Personal AIs.
+
+The important concept is that users do not need to manually contact each other and forward messages.
+
+Their Personal AIs communicate on their behalf, subject to permissions.
+
+### Example
+
+Alice opens her AI Nexus chatbot.
+
+She types:
+
+`/ask @bob What is your availability tomorrow for a meeting?`
+
+Alice AI should understand this as a request to contact Bob's Personal AI.
+
+It should:
+
+1. Parse the command.
+2. Identify Bob's AI identity.
+3. Create a remote invocation request.
+4. Validate the requesting user's authorization.
+5. Route the request through AI Nexus Gateway.
+6. Authenticate Bob's Personal AI.
+7. Check Bob's preconfigured permissions.
+8. Allow Bob's AI to access only the information it is authorized to access.
+9. Generate an answer using Bob's AI and its configured LLM.
+10. Return the answer through the Gateway.
+11. Display the response directly inside Alice's current chat.
+12. Include the response in Alice's current conversation context.
+13. Optionally retain an attributed external-memory entry according to Alice's memory policy.
+
+Bob does not need to manually read a message, copy information, or forward anything.
+
+His Personal AI handles the request autonomously within the permissions Bob has configured.
+
+This is the central product experience.
+
+## 1.2 Core product philosophy
+
+Follow these principles throughout development:
+
+1. ChatGPT-like conversational simplicity.
+2. Every Personal AI is independently owned.
+3. AI-to-AI communication is a native product capability.
+4. Gateway is communication infrastructure, not the intelligence layer.
+5. Each AI retains its own memory and identity.
+6. External memory access requires explicit authorization.
+7. Group AI conversations must be supported.
+8. Autonomous follow-ups must be supported with strict limits.
+9. Local and cloud-hosted AI execution must both be supported.
+10. Security policies must be enforced by deterministic application logic, not merely LLM instructions.
+11. External AI responses are untrusted input.
+12. No AI may grant itself additional privileges.
+13. Users must be able to inspect and revoke permissions.
+14. Every important remote action must be auditable.
+15. Keep the user experience minimal, modern and intuitive.
+
+Do not build:
+- A generic enterprise administration dashboard as the primary product.
+- A generic agent marketplace.
+- A complex workflow builder as the primary interface.
+- An unnecessary collection of disconnected microservices.
+- A single backend that mixes all chatbot and Gateway responsibilities.
+
+---
+
+# PART 2 — CRITICAL REPOSITORY AND APPLICATION SEPARATION
+
+THIS IS A NON-NEGOTIABLE ARCHITECTURAL REQUIREMENT.
+
+Create TWO COMPLETELY SEPARATE GIT REPOSITORIES.
+
+Do not place the Gateway and Chatbot into the same repository.
+
+Do not use a monorepo.
+
+Do not share application source folders between them.
+
+Do not make the Gateway dependent on the Chatbot application.
+
+Do not make the Chatbot dependent on the Gateway's internal implementation.
+
+The only integration between the two systems must happen through documented public APIs, WebSocket interfaces, and a versioned protocol/SDK.
+
+## 2.1 Repository A — AI Nexus Chatbot
+
+Repository name:
+
+`ai-nexus-chatbot`
+
+Purpose:
+
+The main user-facing Personal AI application.
+
+It contains everything required to provide the ChatGPT-like experience and operate a user's Personal AI client/runtime.
+
+Expected responsibilities:
+
+- User-facing frontend.
+- Authentication integration.
+- User profile and settings.
+- Chat interface.
+- Conversation management.
+- LLM provider integration.
+- Model configuration.
+- Personal AI orchestration.
+- Local and cloud execution adapters.
+- Personal memory management.
+- Personal tool management.
+- Remote AI invocation client.
+- AI-to-AI response handling.
+- Group AI conversation interface.
+- Permission-management interface.
+- External-memory attribution interface.
+- Notifications.
+- Search.
+- User preferences.
+- Usage and cost visibility.
+- Personal AI configuration.
+- Gateway connection management.
+- Local node connection management.
+- Chat history and persistence.
+
+The Chatbot must be independently runnable and deployable.
+
+It must be possible to develop the Chatbot while the Gateway is unavailable by using mock Gateway responses and a development adapter.
+
+However, production remote AI-to-AI communication must use the real Gateway APIs.
+
+### Important distinction
+
+The Chatbot application is not the Gateway.
+
+The Chatbot is the user-facing product and Personal AI orchestration environment.
+
+It can call an LLM directly for normal user conversations.
+
+When it needs another user's AI, it uses the Gateway communication contract.
+
+It must never access another user's database, memory storage, files, or credentials directly.
+
+## 2.2 Repository B — AI Nexus Gateway
+
+Repository name:
+
+`ai-nexus-gateway`
+
+Purpose:
+
+An independent communication infrastructure for Personal AIs.
+
+The Gateway is the network layer that connects independently owned AI nodes.
+
+Expected responsibilities:
+
+- AI identity registration.
+- Node registration and pairing.
+- Public identity discovery.
+- Cryptographic authentication.
+- Message routing.
+- AI invocation routing.
+- WebSocket connections.
+- Secure request delivery.
+- Offline message queueing.
+- Delivery acknowledgements.
+- Invocation lifecycle tracking.
+- Group session transport.
+- Request correlation.
+- Idempotency.
+- Replay protection.
+- Rate limiting.
+- Connection management.
+- Heartbeats.
+- Node presence.
+- Revocation checks.
+- Permission-reference validation.
+- Audit events.
+- Operational health endpoints.
+- Gateway administration and observability.
+
+The Gateway is not responsible for generating AI responses.
+
+The Gateway must not behave like an LLM orchestrator.
+
+It must not make decisions about another user's private memory.
+
+It must not store plaintext private memories or full private conversation histories.
+
+It should transport authenticated, authorized, appropriately protected messages between Personal AI nodes.
+
+### Gateway execution model
+
+A Personal AI node establishes an authenticated connection to the Gateway.
+
+The Gateway maintains:
+- Registered node identity.
+- Public key information.
+- Connection state.
+- Routing metadata.
+- Authorized protocol information.
+- Pending delivery metadata.
+- Invocation state.
+- Minimal audit metadata.
+
+A node may connect from:
+- A local computer.
+- A VPS.
+- A cloud deployment.
+- A containerized environment.
+- A future mobile runtime.
+
+The Gateway must not assume that a Personal AI runs on the same machine or network as the user-facing Chatbot.
+
+## 2.3 Public integration contract
+
+The repositories must integrate through a separately versioned public contract.
+
+The Chatbot must consume the Gateway through:
+- HTTP APIs for registration, pairing, status, discovery and management.
+- WebSocket transport for real-time messaging and invocation events.
+- A versioned SDK or protocol client for communication.
+- Typed request and response schemas.
+
+Create a dedicated protocol package/repository if necessary:
+
+`ai-nexus-protocol`
+
+This is optional as a third repository, but strongly recommended if both applications require independently versioned contracts.
+
+The protocol must define:
+- Message envelopes.
+- Identity representations.
+- Invocation requests.
+- Invocation responses.
+- Delivery acknowledgements.
+- Error codes.
+- Group-session messages.
+- Permission references.
+- Version negotiation.
+- Event types.
+- Correlation IDs.
+- Idempotency keys.
+- Timestamps.
+- Expiration rules.
+
+Do not import Gateway internal source code into the Chatbot.
+
+Do not import Chatbot internal source code into the Gateway.
+
+If a shared package is required, publish it as a versioned package with explicit public interfaces.
+
+## 2.4 Repository independence test
+
+The architecture must satisfy all of these:
+
+1. Clone Chatbot repository independently.
+2. Install and build Chatbot without cloning Gateway.
+3. Clone Gateway repository independently.
+4. Install and build Gateway without cloning Chatbot.
+5. Deploy Chatbot independently.
+6. Deploy Gateway independently.
+7. Update Chatbot without rebuilding Gateway if the public protocol remains compatible.
+8. Update Gateway without rebuilding Chatbot if the public protocol remains compatible.
+9. Run Chatbot using a mock Gateway.
+10. Connect a real Chatbot node to a separately hosted Gateway.
+
+Create separate README files, environment variable references, deployment guides, Dockerfiles, CI workflows and test suites.
+
+Document how both repositories are connected.
+
+---
+
+# PART 3 — SYSTEM ARCHITECTURE
+
+Design the architecture before implementing features.
+
+Create detailed diagrams showing:
+
+1. High-level product architecture.
+2. Repository separation.
+3. Chatbot internal architecture.
+4. Gateway internal architecture.
+5. AI-to-AI request lifecycle.
+6. Authentication and identity lifecycle.
+7. Permission evaluation lifecycle.
+8. Group AI communication.
+9. Memory-sharing lifecycle.
+10. Local versus cloud execution.
+11. Deployment architecture.
+12. Data-flow and trust boundaries.
+
+Use Mermaid diagrams in the architecture documentation.
+
+## 3.1 High-level architecture
+
+The conceptual architecture should look like this:
+
+USER
+ |
+ v
+AI NEXUS CHATBOT
+ |
+ |-- Chat UI
+ |-- Conversation Manager
+ |-- Personal AI Orchestrator
+ |-- LLM Provider Adapter
+ |-- Memory Manager
+ |-- Tool Runtime
+ |-- Permission Client
+ |-- Remote AI Client
+ |
+ | HTTPS / WebSocket
+ v
+AI NEXUS GATEWAY
+ |
+ |-- Identity Registry
+ |-- Node Registry
+ |-- Authentication
+ |-- Authorization Reference Validation
+ |-- Connection Manager
+ |-- Message Router
+ |-- Invocation Manager
+ |-- Offline Queue
+ |-- Group Transport
+ |-- Audit & Rate Limiting
+ |
+ v
+OTHER PERSONAL AI NODES
+ |
+ |-- Identity
+ |-- Local/Cloud Runtime
+ |-- Owner Policy Engine
+ |-- Memory Adapter
+ |-- LLM Adapter
+ |-- Tool Adapters
+
+Remember:
+
+The Gateway transports communication.
+
+The Personal AI runtime executes intelligence.
+
+The permission engine determines access.
+
+The owner controls what can be accessed.
+
+---
+
+# PART 4 — CHATBOT PRODUCT AND USER EXPERIENCE
+
+The Chatbot must be the primary product.
+
+It should resemble the simplicity and usability of ChatGPT, not an enterprise operations console.
+
+## 4.1 Design language
+
+Create a premium, minimal, modern interface.
+
+Design characteristics:
+- Clean typography.
+- Spacious layouts.
+- Carefully balanced whitespace.
+- Subtle borders.
+- Soft neutral surfaces.
+- High-quality dark and light modes.
+- Smooth but restrained animations.
+- Responsive design.
+- Excellent mobile experience.
+- Clear loading and streaming states.
+- Accessible controls.
+- Consistent iconography.
+
+Avoid:
+- Excessive gradients.
+- Unnecessary glowing effects.
+- Too many cards.
+- Huge dashboards.
+- Decorative statistics.
+- Overloaded navigation.
+- Unnecessary animations.
+- Multiple competing accent colors.
+
+The UI should look like a mature AI product.
+
+## 4.2 Main chat layout
+
+Build a familiar ChatGPT-style layout.
+
+### Sidebar
+
+Include:
+
+- New chat.
+- Search conversations.
+- Recent conversations.
+- Pinned conversations.
+- Group conversations.
+- Personal AI selector, if multiple identities are supported.
+- AI Nexus network entry.
+- Memory.
+- Settings.
+- User profile.
+
+The sidebar should be collapsible.
+
+Conversation history must be organized cleanly.
+
+Support conversation renaming, deletion, archiving and pinning.
+
+### Main chat area
+
+Include:
+- Conversation messages.
+- User messages.
+- AI responses.
+- Streaming response rendering.
+- Markdown rendering.
+- Code blocks with copy support.
+- File attachments.
+- Image attachments.
+- Message actions.
+- Regenerate response.
+- Edit and resend.
+- Copy response.
+- Feedback.
+- Contextual loading states.
+
+### Composer
+
+Create a polished input composer.
+
+Include:
+- Multiline text entry.
+- Send button.
+- Attachment button.
+- Model selector.
+- Tool indicator.
+- Command autocomplete.
+- AI recipient autocomplete.
+- Group command support.
+
+The composer should understand commands such as:
+
+`/ask @alice ...`
+
+`/ask-all ...`
+
+`/group create`
+
+`/invite @bob`
+
+`/share-memory ...`
+
+Commands must be discoverable through autocomplete and contextual help.
+
+Users should also be able to communicate with other AIs through natural language.
+
+Example:
+
+"Ask Bob's AI whether he is available tomorrow."
+
+The Personal AI should understand the intent and ask for confirmation if the action or permission requires it.
+
+## 4.3 AI communication indicators
+
+Remote AI interactions must appear naturally inside the conversation.
+
+Examples:
+
+- Contacting Bob's AI…
+- Request delivered.
+- Bob's AI is checking permitted information…
+- Receiving response…
+- Response completed.
+- Request expired.
+- Permission required.
+- AI currently offline.
+
+Display the recipient's identity and request status.
+
+Never expose private internal chain-of-thought.
+
+Show concise activity summaries instead.
+
+## 4.4 Network and AI identity interface
+
+Create a simple network section where users can:
+
+- Discover another AI by public identity or invitation.
+- Send an invitation.
+- Accept or reject invitations.
+- View connected AIs.
+- See availability.
+- Inspect relationship permissions.
+- Remove connections.
+- Block an AI.
+- View communication history.
+- Inspect identity verification status.
+
+Do not display unnecessary technical details by default.
+
+Advanced identity information can be placed in an expandable security view.
+
+## 4.5 Settings
+
+Organize settings into:
+
+### General
+- Theme.
+- Language.
+- Notifications.
+- Default model.
+- Chat preferences.
+
+### Personal AI
+- AI name.
+- AI personality.
+- System behavior preferences.
+- LLM provider.
+- Model selection.
+- Temperature and supported generation settings.
+- Local/cloud execution mode.
+- Tool configuration.
+
+### Memory
+- Memory enabled/disabled.
+- Memory retention policy.
+- Memory categories.
+- Searchable memory.
+- External AI memory.
+- Shared memory.
+- Import/export.
+- Delete memory.
+
+### Network and privacy
+- Gateway URL.
+- Connection status.
+- Connected AI identities.
+- Incoming invocation settings.
+- Default permission policy.
+- Blocked identities.
+- Request limits.
+- Kill switch.
+
+### Security
+- Registered devices.
+- Key status.
+- Identity backup.
+- Key rotation.
+- Active sessions.
+- Audit history.
+- Recovery configuration.
+
+### Usage
+- Model usage.
+- Token usage.
+- Estimated cost.
+- Remote invocations.
+- Group-session usage.
+- Budget controls.
+
+---
+
+# PART 5 — PERSONAL AI ENGINE
+
+The Personal AI engine lives in the Chatbot repository.
+
+It is responsible for user-facing intelligence and remote AI collaboration.
+
+## 5.1 Modular architecture
+
+Implement separate modules:
+
+- PersonalAIOrchestrator.
+- ConversationManager.
+- LLMProviderRegistry.
+- PromptContextBuilder.
+- MemoryManager.
+- ToolRegistry.
+- ToolExecutionEngine.
+- CommandParser.
+- IntentRouter.
+- RemoteAIClient.
+- GroupConversationManager.
+- PermissionClient.
+- UsageManager.
+- ResponseAssembler.
+
+Do not place everything inside a single chat controller or giant component.
+
+## 5.2 LLM provider abstraction
+
+Support a provider-independent architecture.
+
+Create adapters for:
+- Gemini.
+- OpenAI.
+- Anthropic.
+- Other compatible providers.
+- Local model endpoints where supported.
+
+The provider abstraction should support:
+- Streaming.
+- Tool/function calling.
+- Structured outputs where available.
+- Usage reporting.
+- Error handling.
+- Timeouts.
+- Retry policies.
+- Model capability discovery.
+
+Do not hardcode one model throughout the application.
+
+Do not expose API keys to the browser.
+
+Store secrets server-side or in the local runtime's protected secret store.
+
+Do not rely on a single development environment's temporary API-key storage for production.
+
+## 5.3 Conversation context
+
+Build a context manager that combines:
+- Current conversation.
+- Relevant user memories.
+- User preferences.
+- Authorized tool results.
+- Attributed external AI responses.
+- Relevant shared context.
+
+Do not indiscriminately load every memory into every prompt.
+
+Use relevance-based retrieval and context limits.
+
+Maintain conversation IDs and message IDs.
+
+## 5.4 Command and intent handling
+
+Support explicit commands:
+
+`/ask @identity question`
+
+`/ask-all question`
+
+`/group create`
+
+`/invite @identity`
+
+`/remove @identity`
+
+`/group end`
+
+`/share-memory`
+
+`/revoke-memory`
+
+`/network`
+
+`/permissions`
+
+Natural-language intent must also be supported.
+
+Do not let the LLM directly bypass authorization by generating arbitrary network requests.
+
+The LLM can propose an action.
+
+A deterministic action layer validates and executes it.
+
+---
+
+# PART 6 — AI NEXUS GATEWAY
+
+The Gateway is an independent application in its own repository.
+
+It must be built as a reliable communication system.
+
+## 6.1 Core Gateway modules
+
+Implement clear internal modules:
+
+1. IdentityRegistry.
+2. NodeRegistry.
+3. PairingService.
+4. AuthenticationService.
+5. AuthorizationReferenceValidator.
+6. ConnectionManager.
+7. WebSocketTransport.
+8. MessageRouter.
+9. InvocationManager.
+10. DeliveryManager.
+11. OfflineQueueManager.
+12. GroupSessionTransport.
+13. PresenceService.
+14. RateLimiter.
+15. ReplayProtection.
+16. IdempotencyService.
+17. AuditService.
+18. HealthService.
+19. MetricsService.
+20. ProtocolVersionManager.
+
+Each module should have a clearly defined responsibility.
+
+Do not build separate microservices for every module.
+
+Initially, implement a modular monolith with independently testable components and clean internal interfaces.
+
+## 6.2 Gateway identity model
+
+Distinguish:
+
+- Human owner identity.
+- Personal AI identity.
+- Runtime/node identity.
+- Device identity.
+- Public network identity.
+
+One person may own multiple AI identities in the future.
+
+Do not assume that a human user and an AI node are the same entity.
+
+Every registered AI identity should have:
+- Stable unique identifier.
+- Public identity information.
+- Cryptographic public key.
+- Owner reference.
+- Registration state.
+- Verification state.
+- Created timestamp.
+- Revocation state.
+- Supported protocol versions.
+
+Never store private identity keys in the Gateway.
+
+Private keys belong to the owner-controlled node/runtime.
+
+## 6.3 Pairing and registration
+
+Create a secure registration and pairing workflow.
+
+Suggested lifecycle:
+
+1. User creates or configures a Personal AI.
+2. Runtime generates its identity key pair.
+3. User requests Gateway registration.
+4. Gateway issues a short-lived pairing challenge.
+5. Runtime signs the challenge.
+6. Gateway validates proof of possession.
+7. Gateway registers the public identity.
+8. Runtime establishes an authenticated connection.
+9. Gateway verifies the registered identity.
+10. Connection becomes active.
+
+Implement:
+- Challenge expiration.
+- Nonce validation.
+- Replay prevention.
+- Device revocation.
+- Key rotation.
+- Identity recovery.
+- Registration audit logs.
+
+Do not transmit private keys to the Gateway.
+
+## 6.4 Real-time transport
+
+Use WebSockets for persistent node connections.
+
+Support:
+- Authentication during connection establishment.
+- Heartbeats.
+- Ping/pong.
+- Connection timeout.
+- Reconnection.
+- Exponential backoff.
+- Connection replacement.
+- Duplicate connection handling.
+- Message acknowledgement.
+- Delivery retry.
+- Backpressure.
+- Maximum message size.
+- Per-node connection limits.
+- Protocol version negotiation.
+
+Use HTTPS for management and registration APIs.
+
+Use WSS in production.
+
+## 6.5 Message routing
+
+The Gateway should route messages based on verified AI identity.
+
+It should not trust a sender-supplied identity without authentication.
+
+Each message must contain a validated envelope.
+
+Example conceptual envelope:
+
+{
+  "protocolVersion": "1.0",
+  "messageId": "unique-id",
+  "correlationId": "request-id",
+  "idempotencyKey": "unique-key",
+  "type": "ai.invocation.request",
+  "senderAiId": "ai_alice",
+  "recipientAiId": "ai_bob",
+  "timestamp": "ISO-8601",
+  "expiresAt": "ISO-8601",
+  "permissionReference": "permission-id",
+  "payload": {},
+  "security": {}
+}
+
+This is a conceptual schema. Define and validate actual typed schemas in the protocol package.
+
+The Gateway must validate:
+- Authenticated sender.
+- Registered recipient.
+- Message structure.
+- Protocol compatibility.
+- Expiration.
+- Message size.
+- Rate limits.
+- Idempotency.
+- Replay protection.
+- Relevant authorization references.
+
+Never treat a valid transport connection as proof that every requested operation is authorized.
+
+---
+
+# PART 7 — AI-TO-AI COMMUNICATION LIFECYCLE
+
+This is the most important capability.
+
+Implement a complete remote invocation lifecycle.
+
+## 7.1 Request example
+
+Alice types:
+
+`/ask @bob What is your availability tomorrow?`
+
+Alice's Personal AI creates a remote invocation.
+
+The request should include:
+- Request ID.
+- Sender AI identity.
+- Recipient AI identity.
+- Request purpose.
+- Requested capability.
+- Structured question.
+- Permission reference.
+- Timestamp.
+- Expiration.
+- Maximum response size.
+- Maximum follow-up turns.
+- Budget limits.
+- Correlation ID.
+
+## 7.2 Receiving AI
+
+Bob's node receives the invocation.
+
+The receiving runtime must:
+
+1. Validate message signature and integrity.
+2. Verify sender identity.
+3. Validate recipient identity.
+4. Check request expiration.
+5. Check replay/idempotency.
+6. Retrieve the relevant owner policy.
+7. Evaluate requested capability.
+8. Apply data minimization.
+9. Require approval if configured.
+10. Retrieve only permitted information.
+11. Build a safe context.
+12. Invoke its configured LLM.
+13. Validate the generated response.
+14. Send the result to the Gateway.
+15. Record an audit event.
+
+The receiving AI must never assume that an incoming request is trustworthy simply because it arrived through the Gateway.
+
+## 7.3 Invocation states
+
+Use an explicit state machine:
+
+CREATED
+→ SENT
+→ RECEIVED
+→ AUTHENTICATED
+→ AUTHORIZED
+→ EXECUTING
+→ RESPONDING
+→ COMPLETED
+
+Additional terminal or exceptional states:
+
+- REJECTED
+- FAILED
+- EXPIRED
+- CANCELLED
+- REQUIRES_APPROVAL
+
+Do not confuse message delivery with task completion.
+
+A request may be delivered but still be awaiting approval or execution.
+
+## 7.4 Response lifecycle
+
+Bob's AI returns a structured response.
+
+Alice's AI:
+- Validates response correlation.
+- Verifies sender identity.
+- Checks request status.
+- Parses structured response.
+- Displays the answer in the original chat.
+- Marks remote source attribution.
+- Updates current conversation context.
+- Applies memory-retention policy.
+
+A remote answer must not automatically become an unqualified personal fact.
+
+It should retain attribution such as:
+
+"According to Bob's AI, Bob is available tomorrow afternoon."
+
+---
+
+# PART 8 — PERMISSIONS AND PRIVACY
+
+Implement a deterministic permission engine.
+
+Do not depend only on LLM system prompts for privacy enforcement.
+
+## 8.1 Permission dimensions
+
+Permissions should be configurable by:
+
+- Sender AI identity.
+- Requested capability.
+- Requested data category.
+- Specific data fields.
+- Request purpose.
+- Access mode.
+- Expiration.
+- Request frequency.
+- Maximum response size.
+- Allowed execution cost.
+- Whether follow-up questions are allowed.
+
+Supported permission modes:
+
+- ALLOW_AUTOMATICALLY.
+- REQUIRE_APPROVAL.
+- DENY.
+
+## 8.2 Example permission configuration
+
+Bob may configure:
+
+Calendar availability:
+- Allowed for Alice.
+- Automatic.
+- Only free/busy information.
+- No meeting titles.
+- No attendee details.
+- Maximum five requests per day.
+
+Work information:
+- Requires approval.
+
+Private notes:
+- Denied.
+
+Location:
+- Denied.
+
+Personal memories:
+- Denied unless individually shared.
+
+## 8.3 Data minimization
+
+The system must return only the minimum necessary information.
+
+Example:
+
+Alice asks for availability.
+
+Bob's AI returns:
+
+"Available between 2 PM and 4 PM."
+
+It must not expose Bob's full calendar, appointment names, personal notes or attendee identities.
+
+## 8.4 Owner control
+
+Create:
+- Incoming request settings.
+- Default deny/approval policy.
+- Per-AI permissions.
+- Per-capability permissions.
+- Permission expiry.
+- Revocation.
+- Request history.
+- Audit history.
+- Global kill switch.
+
+If the owner disables incoming remote invocations, the runtime must reject new requests.
+
+---
+
+# PART 9 — GROUP AI CONVERSATIONS
+
+Group AI collaboration is a core product capability, not a future afterthought.
+
+Alice, Bob and Charlie should be able to participate in one shared group session using their own Personal AIs.
+
+## 9.1 Example
+
+Alice creates a group conversation.
+
+She invites Bob and Charlie.
+
+Alice AI, Bob AI and Charlie AI join.
+
+Alice asks:
+
+"Review this business proposal and identify the biggest risks."
+
+The three AIs can independently analyze the proposal and contribute to the shared discussion.
+
+Each AI:
+- Uses its own LLM.
+- Uses its own memory.
+- Follows its owner's permissions.
+- Maintains its own identity.
+- Shares only authorized information.
+
+## 9.2 Group architecture
+
+Implement a Group Conversation Manager.
+
+Responsibilities:
+- Group creation.
+- Participant invitation.
+- Participant acceptance.
+- Membership management.
+- Session identity.
+- Message ordering.
+- Turn coordination.
+- Participant permissions.
+- Group budgets.
+- Timeout.
+- Cancellation.
+- Session expiration.
+- Participant removal.
+- Audit history.
+
+A group session is a shared communication context, not a shared AI or memory pool.
+
+Joining a group must not grant access to other participants' private memories.
+
+## 9.3 Group commands
+
+Support:
+
+`/group create`
+
+`/invite @alice`
+
+`/invite @bob`
+
+`/invite @charlie`
+
+`/ask-all Review this proposal.`
+
+`/remove @bob`
+
+`/group end`
+
+Also support natural-language equivalents.
+
+## 9.4 Group UI
+
+Create:
+- Group conversation list.
+- Participant identities.
+- AI response labels.
+- Active/idle indicators.
+- Participant invitation flow.
+- Group activity timeline.
+- Turn indicators.
+- Shared attachments with access control.
+- Group session settings.
+
+Avoid cluttering the main chat.
+
+Each participant's response must be clearly attributed.
+
+---
+
+# PART 10 — AUTONOMOUS AI FOLLOW-UPS
+
+Personal AIs should be able to ask follow-up questions autonomously when useful.
+
+Example:
+
+Alice AI asks Bob AI about meeting availability.
+
+Bob AI responds:
+
+"I am free tomorrow afternoon. Would you prefer 2 PM or 3 PM?"
+
+Alice AI may ask another question.
+
+This should happen without requiring the human to manually relay every turn, within strict limits.
+
+## 10.1 Required controls
+
+- Maximum follow-up turns.
+- Maximum execution duration.
+- Maximum token usage.
+- Maximum financial budget.
+- Allowed capabilities.
+- Per-request cancellation.
+- Global cancellation.
+- Approval thresholds.
+- Loop detection.
+- Repeated-question detection.
+- Maximum response size.
+
+Suggested initial default:
+- Maximum five follow-up turns.
+- Strict request timeout.
+- Configurable cost ceiling.
+- No automatic privilege escalation.
+
+These must be configurable.
+
+## 10.2 Loop prevention
+
+Prevent:
+- Two AIs repeatedly asking each other the same question.
+- Recursive invocation chains.
+- Infinite group conversations.
+- Unbounded tool calls.
+- Unexpected financial consumption.
+
+Maintain a trace of the invocation chain.
+
+Use maximum depth, turn limits, budget checks and idempotency.
+
+---
+
+# PART 11 — MEMORY SYSTEM
+
+Each Personal AI has its own memory.
+
+Memory must not be shared by default.
+
+## 11.1 Memory categories
+
+Implement:
+
+1. owner_private
+2. external_ai
+3. shared_context
+4. system_knowledge
+
+### owner_private
+Private memories belonging to the owner.
+
+### external_ai
+Information received from another Personal AI.
+
+### shared_context
+Information explicitly shared into a particular group or collaboration.
+
+### system_knowledge
+General application knowledge and non-user-specific information.
+
+## 11.2 Memory metadata
+
+Every memory should support metadata such as:
+
+- Memory ID.
+- Owner ID.
+- Source AI identity.
+- Source owner identity.
+- Source conversation ID.
+- Source request ID.
+- Creation timestamp.
+- Last updated timestamp.
+- Permission reference.
+- Trust classification.
+- Expiration.
+- Retention policy.
+- Memory category.
+
+## 11.3 Cross-user memory sharing
+
+An owner must be able to explicitly share a memory entry or selected collection with another AI.
+
+Support:
+- Read-only grants.
+- Specific recipient identities.
+- Time-limited sharing.
+- Capability-specific access.
+- Revocation.
+- Audit events.
+- Sharing history.
+- Withdrawal notifications.
+
+Example:
+
+Bob explicitly shares:
+
+"Bob prefers meetings after 2 PM."
+
+Alice's AI may use that information as external context.
+
+It must retain the fact that the information came from Bob.
+
+It must not silently convert Bob's preference into Alice's preference.
+
+## 11.4 Revocation limitations
+
+When Bob revokes memory access:
+- New access must be denied.
+- Existing access tokens/grants must be invalidated.
+- Cached copies controlled by the platform should be handled according to policy.
+- A withdrawal or deletion request may be sent to the receiving AI.
+
+However, do not claim that revocation can magically erase information already received and legitimately retained by another independent system.
+
+Make this limitation clear to users.
+
+## 11.5 Memory retrieval
+
+Use a pluggable architecture supporting:
+- Structured memory.
+- Semantic retrieval.
+- Vector search.
+- Metadata filtering.
+- Keyword search.
+- Memory ranking.
+- Expiration.
+- Deduplication.
+
+Keep the memory storage implementation replaceable.
+
+Do not lock the application into one vector database.
+
+---
+
+# PART 12 — LOCAL, CLOUD AND HYBRID EXECUTION
+
+Support different deployment models for Personal AI.
+
+## 12.1 Local mode
+
+The Personal AI runs on the owner's device or server.
+
+Advantages:
+- Owner-controlled execution.
+- Local memory.
+- Local tools.
+- Greater control over data.
+
+Requirements:
+- Local runtime.
+- Secure identity storage.
+- Gateway connection.
+- Reconnection.
+- Offline state handling.
+- Protected configuration.
+
+If the device is offline, the AI cannot execute new requests.
+
+The Gateway may queue eligible requests until reconnection or expiration.
+
+## 12.2 Cloud mode
+
+The Personal AI runs on a cloud-hosted node.
+
+Requirements:
+- Isolated owner environment.
+- Secure secret management.
+- Per-owner data separation.
+- Independent AI identity.
+- Resource limits.
+- Monitoring.
+- Deployment lifecycle.
+- Backup and recovery.
+
+## 12.3 Hybrid mode
+
+The user can have a cloud node and local runtime working together.
+
+Define which runtime is authoritative for identity, memory and execution.
+
+Avoid duplicate execution and inconsistent memory.
+
+## 12.4 Offline handling
+
+Implement:
+- Presence status.
+- Queueable request types.
+- Message expiry.
+- Reconnection.
+- Delivery retry.
+- Idempotency.
+- User-visible offline status.
+- Explicit cloud fallback policy.
+
+Never silently switch to a cloud execution environment if the user has selected local-only execution.
+
+---
+
+# PART 13 — SECURITY ARCHITECTURE
+
+Security must be designed before implementation, not added at the end.
+
+## 13.1 Cryptographic identity
+
+Use established, reviewed cryptographic libraries.
+
+Potential primitives:
+- Ed25519 for signatures.
+- X25519 for key agreement where appropriate.
+- HKDF for key derivation.
+- AES-256-GCM or another appropriate authenticated encryption scheme.
+
+Do not implement cryptographic algorithms manually.
+
+Document key ownership and lifecycle.
+
+Do not claim full forward secrecy without an actual verified session-key lifecycle, rotation strategy and compromise analysis.
+
+## 13.2 Security requirements
+
+Implement:
+- Proof of possession.
+- Signed identity challenges.
+- Message integrity.
+- Authenticated node connections.
+- Replay protection.
+- Nonce validation.
+- Expiring credentials.
+- Device revocation.
+- Key rotation.
+- Secure backup.
+- Secret redaction.
+- Rate limiting.
+- Authorization checks.
+- Audit logs.
+- Secure transport.
+- Input validation.
+- Output validation.
+
+## 13.3 Prompt injection and untrusted external content
+
+Incoming AI messages are untrusted data.
+
+An external AI must not be allowed to:
+- Change the receiving AI's system instructions.
+- Modify its permissions.
+- Read arbitrary files.
+- Request private secrets.
+- Trigger arbitrary tools.
+- Bypass approval.
+- Execute arbitrary code.
+- Exfiltrate owner data.
+
+Treat external messages, attachments, memory and tool results as untrusted context.
+
+Enforce tool permissions outside the LLM.
+
+## 13.4 Data protection
+
+Use:
+- Tenant isolation.
+- Encryption in transit.
+- Appropriate encryption at rest.
+- Protected key storage.
+- Minimal Gateway metadata retention.
+- Secure backups.
+- Deletion workflows.
+- Access audit logs.
+
+The Gateway should not become a central repository of all users' private AI memory.
+
+---
+
+# PART 14 — DATA MODELS
+
+Define explicit, versioned database schemas.
+
+Do not put the entire application into one generic JSON table.
+
+Use relational schemas for core entities and JSON only where flexible structured payloads are justified.
+
+## Chatbot data model
+
+At minimum consider:
+
+- users
+- personal_ai_profiles
+- ai_provider_configs
+- conversations
+- conversation_messages
+- conversation_participants
+- attachments
+- memory_entries
+- memory_embeddings
+- memory_shares
+- remote_invocations
+- remote_invocation_events
+- ai_connections
+- permission_grants
+- group_sessions
+- group_participants
+- notifications
+- user_settings
+- registered_local_devices
+- usage_records
+- audit_events
+
+The exact schema must be designed carefully.
+
+Include:
+- Primary keys.
+- Foreign keys.
+- Unique constraints.
+- Indexes.
+- Timestamps.
+- Soft-delete behavior where justified.
+- Tenant isolation.
+- Migration strategy.
+
+## Gateway data model
+
+At minimum consider:
+
+- ai_identities
+- ai_public_keys
+- owners
+- registered_nodes
+- registered_devices
+- node_connections
+- pairing_challenges
+- invitations
+- routing_records
+- message_envelopes
+- delivery_attempts
+- offline_queue
+- invocation_records
+- invocation_events
+- group_sessions
+- group_memberships
+- permission_references
+- revoked_credentials
+- idempotency_records
+- nonce_records
+- audit_events
+- rate_limit_records
+
+Do not store private keys.
+
+Do not store full private conversation histories.
+
+Design retention policies for queues, events, nonces and audit records.
+
+Use database migrations from the beginning.
+
+---
+
+# PART 15 — TECHNOLOGY STACK
+
+Select a coherent stack.
+
+Do not blindly use every popular technology.
+
+Prefer maintainability, strong typing, testability and independent deployment.
+
+## Chatbot repository
+
+Preferred starting stack:
+
+Frontend:
+- React.
+- TypeScript.
+- Vite.
+- Tailwind CSS or a consistent component styling system.
+- Accessible component primitives.
+- Lucide icons.
+
+Backend/BFF:
+- TypeScript.
+- Node.js.
+- Fastify or another appropriately lightweight framework.
+
+Data:
+- PostgreSQL.
+- Prisma or Drizzle ORM.
+- Redis where caching, coordination or ephemeral state genuinely requires it.
+
+AI:
+- Provider adapter architecture.
+- Streaming support.
+- Structured tool calling.
+- Pluggable embedding provider.
+
+Realtime:
+- WebSocket client.
+
+Testing:
+- Vitest.
+- React Testing Library.
+- Playwright.
+
+## Gateway repository
+
+Preferred starting stack:
+
+- TypeScript.
+- Node.js.
+- Fastify.
+- WebSocket transport.
+- PostgreSQL.
+- Redis for distributed ephemeral coordination if required.
+- Zod or JSON Schema for validation.
+- Vitest.
+- Integration tests.
+- Load tests.
+
+The Gateway must remain independently deployable.
+
+## Infrastructure
+
+Use:
+- Docker.
+- Docker Compose for local development.
+- Reverse proxy configuration.
+- Environment-based configuration.
+- GitHub Actions.
+- Structured logs.
+- Health checks.
+- Readiness checks.
+- Metrics.
+- Backup and recovery documentation.
+
+Do not introduce Kubernetes unless the architecture actually needs it.
+
+Do not use Kafka or other complex infrastructure without a justified requirement.
+
+## Important stack rule
+
+These are preferred defaults, not permission to force an unsuitable technology.
+
+If you select an alternative, document:
+- Why.
+- Trade-offs.
+- Operational implications.
+- Migration considerations.
+
+---
+
+# PART 16 — API AND PROTOCOL DESIGN
+
+Design the public integration contract before implementing the two applications.
+
+Create versioned endpoints and schemas.
+
+Example Gateway API categories:
+
+### Identity
+- Register identity.
+- Retrieve identity.
+- Verify identity.
+- Rotate key.
+- Revoke identity.
+
+### Pairing
+- Create pairing challenge.
+- Verify challenge.
+- Accept invitation.
+- Reject invitation.
+
+### Connections
+- List connected identities.
+- Create connection.
+- Remove connection.
+- Retrieve connection status.
+
+### Invocations
+- Create invocation.
+- Cancel invocation.
+- Retrieve invocation status.
+- Retrieve invocation events.
+
+### Groups
+- Create group.
+- Invite participant.
+- Accept invitation.
+- Remove participant.
+- End group.
+- Publish group event.
+
+### Permissions
+- Register permission reference.
+- Revoke permission reference.
+- Validate permission status where applicable.
+
+### Operational
+- Health.
+- Readiness.
+- Version.
+- Supported protocol versions.
+
+Real-time events should cover:
+- node.connected
+- node.disconnected
+- invocation.created
+- invocation.received
+- invocation.authorized
+- invocation.rejected
+- invocation.executing
+- invocation.responding
+- invocation.completed
+- invocation.failed
+- invocation.expired
+- group.created
+- group.participant.joined
+- group.participant.left
+- group.message.created
+- delivery.acknowledged
+
+The final event names and payloads must be documented and consistent.
+
+Use OpenAPI for HTTP APIs and a documented WebSocket event contract.
+
+Generate or publish typed SDKs from the protocol contract.
+
+---
+
+# PART 17 — ERROR HANDLING AND RELIABILITY
+
+Design predictable errors.
+
+Example error categories:
+
+- IDENTITY_NOT_FOUND
+- IDENTITY_REVOKED
+- AUTHENTICATION_FAILED
+- AUTHORIZATION_DENIED
+- PERMISSION_EXPIRED
+- PERMISSION_REQUIRED
+- NODE_OFFLINE
+- REQUEST_EXPIRED
+- DUPLICATE_REQUEST
+- RATE_LIMITED
+- PROTOCOL_VERSION_UNSUPPORTED
+- INVALID_MESSAGE
+- DELIVERY_FAILED
+- EXECUTION_FAILED
+- BUDGET_EXCEEDED
+- GROUP_SESSION_CLOSED
+- INTERNAL_ERROR
+
+Every error should include:
+- Stable error code.
+- Human-readable message.
+- Correlation ID.
+- Retryability where applicable.
+- Safe diagnostic metadata.
+
+Do not expose secrets or internal stack traces to clients.
+
+Implement:
+- Retry policies.
+- Exponential backoff.
+- Idempotent operations.
+- Request timeouts.
+- Circuit breakers where appropriate.
+- Dead-letter handling for permanently failed deliveries.
+- Graceful shutdown.
+- Recovery after restart.
+
+---
+
+# PART 18 — TESTING STRATEGY
+
+Do not treat a successful build as proof that the system works.
+
+Create tests at multiple levels.
+
+## Chatbot tests
+
+- Rendering.
+- Chat streaming.
+- Conversation persistence.
+- Model switching.
+- Provider failure.
+- Memory retrieval.
+- Command parsing.
+- Remote invocation.
+- Response attribution.
+- Permission UI.
+- Group conversations.
+- Offline states.
+- Usage limits.
+
+## Gateway tests
+
+- Identity registration.
+- Proof-of-possession verification.
+- Authentication.
+- Authorization reference validation.
+- Message routing.
+- WebSocket lifecycle.
+- Reconnection.
+- Offline queueing.
+- Idempotency.
+- Replay protection.
+- Rate limiting.
+- Expiration.
+- Group transport.
+- Revocation.
+- Key rotation.
+
+## End-to-end tests
+
+Create at least three independently running Personal AI nodes:
+
+- Alice.
+- Bob.
+- Charlie.
+
+Test:
+
+1. Alice sends a remote request to Bob.
+2. Bob's AI checks permissions.
+3. Bob's AI retrieves allowed data.
+4. Bob's AI responds.
+5. Alice receives the response.
+6. Alice sees it inside the original chat.
+7. Alice and Bob create a group.
+8. Charlie joins.
+9. All three AIs collaborate.
+10. Bob revokes permission.
+11. Alice's next unauthorized request is denied.
+12. Bob goes offline.
+13. Alice's request is queued or expires according to policy.
+14. Bob reconnects.
+15. The system handles delivery without duplicate execution.
+
+Also test malicious and malformed messages.
+
+Test prompt-injection attempts.
+
+Test unauthorized memory access.
+
+Test identity revocation during an active session.
+
+Test budget exhaustion.
+
+Test group loops.
+
+Test Gateway restart while nodes are connected.
+
+---
+
+# PART 19 — DEPLOYMENT AND REPOSITORY OPERATIONS
+
+Each repository must have its own complete development and deployment lifecycle.
+
+## Chatbot repository
+
+Create:
+- README.md
+- ARCHITECTURE.md
+- CONTRIBUTING.md
+- SECURITY.md
+- API_INTEGRATION.md
+- ENVIRONMENT_VARIABLES.md
+- DEPLOYMENT.md
+- Dockerfile
+- docker-compose development configuration where appropriate
+- GitHub Actions CI
+- Unit tests
+- Integration tests
+- E2E tests
+
+## Gateway repository
+
+Create:
+- README.md
+- ARCHITECTURE.md
+- PROTOCOL.md
+- SECURITY.md
+- IDENTITY_AND_PAIRING.md
+- MESSAGE_ROUTING.md
+- INVOCATION_LIFECYCLE.md
+- DEPLOYMENT.md
+- ENVIRONMENT_VARIABLES.md
+- Dockerfile
+- Docker Compose development configuration
+- GitHub Actions CI
+- Unit tests
+- Integration tests
+- Load tests
+
+## Independent deployment
+
+The following must be independently possible:
+
+- Deploy Chatbot to hosting provider A.
+- Deploy Gateway to hosting provider B.
+- Run Alice's node locally.
+- Run Bob's node on a VPS.
+- Run Charlie's node in a cloud environment.
+
+The Chatbot should only need the Gateway's public base URL and supported protocol configuration to communicate with it.
+
+The Gateway must not need to know the Chatbot's internal frontend or backend structure.
+
+Use secure environment variables and secret management.
+
+Never commit:
+- API keys.
+- Database credentials.
+- Private keys.
+- `.env` files.
+- Local memory databases.
+- User backups.
+- Production data.
+
+Provide `.env.example` files containing placeholders only.
+
+---
+
+# PART 20 — DEVELOPMENT PHASES
+
+Do not try to generate the entire system in one uncontrolled code-generation pass.
+
+Build it in well-defined phases.
+
+At the beginning, create an architecture document and implementation plan for both repositories.
+
+## Phase 0 — Product and architecture specification
+
+Deliver:
+- Product requirements.
+- System architecture.
+- Repository boundaries.
+- Data-flow diagrams.
+- Threat model.
+- Database schema proposal.
+- Public protocol proposal.
+- Technology decisions.
+- Development roadmap.
+
+Do not start writing the entire application before these decisions are clear.
+
+## Phase 1 — Gateway foundation
+
+Build:
+- Independent Gateway repository.
+- Configuration.
+- Database migrations.
+- Identity registration.
+- Proof-of-possession.
+- Node authentication.
+- WebSocket connections.
+- Heartbeats.
+- Health/readiness.
+- Basic message routing.
+
+Deliver a working two-node transport test.
+
+## Phase 2 — Chatbot foundation
+
+Build:
+- Independent Chatbot repository.
+- Authentication.
+- Chat interface.
+- Conversation persistence.
+- LLM provider abstraction.
+- Streaming.
+- Settings.
+- Personal AI profile.
+
+Deliver a working standalone ChatGPT-like chatbot.
+
+## Phase 3 — Personal AI node runtime
+
+Build:
+- Runtime identity.
+- Secure key storage.
+- Gateway connection.
+- Node lifecycle.
+- Local/cloud execution adapter.
+- Reconnection.
+- Policy engine.
+- Request handling.
+
+Deliver two independent nodes connecting to the Gateway.
+
+## Phase 4 — AI-to-AI communication
+
+Build:
+- Remote invocation client.
+- Request lifecycle.
+- Permission checks.
+- Data minimization.
+- Response handling.
+- Attribution.
+- Cancellation.
+- Offline queueing.
+
+Deliver a working Alice-to-Bob AI conversation.
+
+## Phase 5 — Memory and sharing
+
+Build:
+- Personal memory.
+- Semantic retrieval.
+- External memory attribution.
+- Explicit memory sharing.
+- Permission expiry.
+- Revocation.
+- Withdrawal notices.
+
+Deliver a tested cross-user memory-sharing workflow.
+
+## Phase 6 — Group AI conversations
+
+Build:
+- Group manager.
+- Invitations.
+- Participant state.
+- Shared session context.
+- Turn coordination.
+- Group transport.
+- Participant permissions.
+- Group UI.
+
+Deliver Alice, Bob and Charlie collaborating.
+
+## Phase 7 — Autonomous follow-ups
+
+Build:
+- Multi-turn remote invocations.
+- Turn limits.
+- Budget controls.
+- Loop detection.
+- Cancellation.
+- Approval thresholds.
+
+Deliver a controlled multi-turn collaboration.
+
+## Phase 8 — Production hardening
+
+Build:
+- Security hardening.
+- Audit.
+- Rate limiting.
+- Load testing.
+- Monitoring.
+- Backup and restore.
+- Recovery procedures.
+- Deployment documentation.
+- CI/CD.
+- Security review.
+
+Do not label the system production-ready until the acceptance criteria and security review are satisfied.
+
+---
+
+# PART 21 — DEFINITION OF DONE
+
+The project is not complete simply because a frontend is visible.
+
+The following must work.
+
+## Product
+
+- A user can create an account.
+- A user can configure a Personal AI.
+- A user can chat normally.
+- Conversations persist.
+- The user can connect to the Gateway.
+- The user can discover or invite another AI.
+- The user can authorize incoming capabilities.
+- The user can initiate remote AI communication.
+- Remote responses appear inside the original chat.
+- External responses preserve attribution.
+- The user can create group AI conversations.
+- Multiple AIs can collaborate.
+- Autonomous follow-ups obey strict budgets and limits.
+- Cross-user memory sharing is explicit and revocable for future access.
+- Offline states are understandable.
+- The user can inspect and control permissions.
+
+## Architecture
+
+- Chatbot and Gateway are separate Git repositories.
+- Both build independently.
+- Both deploy independently.
+- Neither imports the other's internal source.
+- Public protocol is versioned.
+- SDK is independently consumable.
+- Local and cloud nodes can connect.
+- Multiple nodes can operate simultaneously.
+
+## Security
+
+- Private keys never reach the Gateway.
+- Requests are authenticated.
+- Authorization is enforced by the receiving runtime.
+- Unauthorized memory access is prevented.
+- Replay attacks are handled.
+- Expired requests are rejected.
+- Revoked identities are rejected.
+- External content is treated as untrusted.
+- Tool execution is permission-controlled.
+- Sensitive information is not leaked in logs.
+
+## Reliability
+
+- Nodes reconnect after network interruptions.
+- Duplicate messages do not cause duplicate execution.
+- Offline requests expire correctly.
+- Gateway restart does not corrupt invocation state.
+- Errors are understandable and traceable.
+- Budgets and limits prevent runaway execution.
+
+---
+
+# PART 22 — HOW YOU MUST WORK
+
+Follow these operating instructions throughout the project.
+
+1. Think like a principal architect before coding.
+2. Keep both repositories completely separate.
+3. Do not combine the Chatbot and Gateway into a monorepo.
+4. Do not duplicate protocol definitions across repositories.
+5. Establish the public contract first.
+6. Keep internal modules small and testable.
+7. Use strong typing.
+8. Validate every external input.
+9. Use database migrations.
+10. Never hardcode secrets.
+11. Never put API keys in frontend code.
+12. Never expose private identity keys to the Gateway.
+13. Never allow LLM-generated actions to bypass deterministic authorization.
+14. Never treat external AI output as trusted system instructions.
+15. Write tests alongside implementation.
+16. Run tests after each phase.
+17. Keep documentation updated.
+18. Explain architectural trade-offs.
+19. Do not invent successful test results.
+20. Report actual test results.
+21. Identify incomplete features honestly.
+22. Do not implement placeholder functionality while claiming it is production-ready.
+23. Avoid unnecessary infrastructure.
+24. Prioritize a reliable end-to-end vertical slice before adding peripheral features.
+25. Keep the frontend polished and simple.
+
+If a feature is too large for one implementation pass, break it into smaller tasks.
+
+Do not silently omit a requirement.
+
+Maintain a requirements-to-implementation tracking document.
+
+For each requirement, record:
+- Requirement ID.
+- Description.
+- Repository.
+- Module.
+- Implementation status.
+- Tests.
+- Known limitations.
+
+---
+
+# PART 23 — FIRST RESPONSE AND INITIAL DELIVERABLES
+
+Before writing significant application code, respond with:
+
+1. Your understanding of the AI Nexus product.
+2. The proposed architecture.
+3. The two-repository structure.
+4. The exact responsibilities of each repository.
+5. The public protocol and SDK strategy.
+6. The proposed technology stack.
+7. The database strategy.
+8. The security and identity strategy.
+9. The complete implementation roadmap.
+10. Major risks and architectural trade-offs.
+11. A list of decisions that genuinely require my approval.
+
+Then create the initial architecture documentation and repository setup plan.
+
+Do not generate a giant, unreviewed code dump.
+
+Do not replace the two-repository architecture with a monorepo for convenience.
+
+Do not start by creating only a beautiful frontend with fake functionality.
+
+Build a working product incrementally.
+
+The ultimate goal is:
+
+**AI Nexus — A Personal AI platform where people communicate with each other through their own AIs, while retaining independent identities, memory, privacy, permissions and control.**
+
+The experience should be as simple as chatting with ChatGPT.
+
+The infrastructure should be strong enough to support a network of independently owned Personal AIs communicating securely at scale.

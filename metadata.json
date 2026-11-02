@@ -1,0 +1,6 @@
+{
+  "name": "AI Nexus",
+  "description": "A Personal AI platform with native, cryptographically authenticated AI-to-AI communication, deterministic permission policies, and independent Personal AI nodes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
